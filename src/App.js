@@ -3,33 +3,16 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // --- IMPORTANT: PASTE YOUR FIREBASE CONFIGURATION HERE ---
-// Make sure your real keys are pasted below.
-// Import the functions you need from the SDKs you need
-//import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
+// If these keys are not replaced, the app will run in a demo mode
+// without saving orders to the database.
 const firebaseConfig = {
-  apiKey: "AIzaSyCL1wojiPJ1vRhgydRLl6KvSil05vMjnZw",
-  authDomain: "hydro-fresh-store.firebaseapp.com",
-  projectId: "hydro-fresh-store",
-  storageBucket: "hydro-fresh-store.firebasestorage.app",
-  messagingSenderId: "1090699587135",
-  appId: "1:1090699587135:web:653e70dd244c5cc9c1928a"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-// --- Initialize Firebase and Firestore ---
-let db;
-try {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-} catch (error) {
-    console.error("Firebase initialization error:", error);
-}
-
 
 // --- ICONS (using inline SVGs for self-containment) ---
 const LeafIcon = () => (
@@ -63,8 +46,8 @@ const ArrowLeftIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
 );
 
-const SpinnerIcon = () => (
-    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+const SpinnerIcon = (props) => (
+    <svg className="animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" {...props}>
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>
@@ -323,7 +306,7 @@ const CheckoutView = ({ onConfirmOrder, onBack }) => {
                         disabled={isLoading}
                         className="w-full mt-6 bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-300 text-lg flex items-center justify-center disabled:bg-green-300"
                     >
-                        {isLoading ? <SpinnerIcon /> : 'Place Order'}
+                        {isLoading ? <SpinnerIcon className="-ml-1 mr-3 h-5 w-5 text-white" /> : 'Place Order'}
                     </button>
                 </div>
             </div>
@@ -352,8 +335,31 @@ const ConfirmationView = ({ onNewOrder }) => {
 export default function App() {
   const [products] = useState(initialProducts);
   const [cart, setCart] = useState([]);
-  const [view, setView] = useState('products'); // 'products', 'cart', 'checkout', 'confirmation'
+  const [view, setView] = useState('products');
   
+  // State for the database instance
+  const [db, setDb] = useState(null);
+
+  useEffect(() => {
+    // This effect runs only once when the app starts.
+    // It will try to initialize Firebase. If the config is invalid or
+    // contains placeholders, it will fail silently, and the `db` state will remain null.
+    try {
+      // Only initialize if the config does NOT contain placeholder values.
+      if (!Object.values(firebaseConfig).some(value => value.includes('YOUR_'))) {
+        const app = initializeApp(firebaseConfig);
+        const firestore = getFirestore(app);
+        setDb(firestore);
+        console.log("Firebase connected successfully.");
+      } else {
+        console.warn("Firebase configuration is incomplete. Running in demo mode.");
+      }
+    } catch (error) {
+      console.error("Firebase initialization failed:", error);
+      // The db state remains null, and the app continues in demo mode.
+    }
+  }, []); // The empty array [] means this effect only runs once
+
   // Cart manipulation functions
   const addToCart = (product) => {
     setCart(prevCart => {
@@ -389,22 +395,23 @@ export default function App() {
   
   // Navigation and Order handling
   const handleConfirmOrder = async (orderData) => {
-    if (!db) {
-        console.error("Firestore is not initialized!");
-        throw new Error("Database connection failed.");
+    // If db is configured, save the order to Firestore.
+    if (db) {
+        const fullOrder = {
+            ...orderData,
+            createdAt: serverTimestamp(),
+            status: 'new'
+        };
+        
+        await addDoc(collection(db, "orders"), fullOrder);
+        console.log("Order saved to Firestore with ID.");
+    } else {
+        // If db is not configured, just log the order to the console.
+        console.warn("DEMO MODE: Firebase not configured. Skipping database save.");
+        console.log("Order data that would be saved:", orderData);
     }
-    // Add a timestamp and status to the order
-    const fullOrder = {
-        ...orderData,
-        createdAt: serverTimestamp(),
-        status: 'new' // You can use this status to track orders
-    };
-    
-    // Save the order to the 'orders' collection in Firestore
-    const docRef = await addDoc(collection(db, "orders"), fullOrder);
-    console.log("Order saved with ID: ", docRef.id);
 
-    // If saving is successful, proceed to confirmation
+    // Proceed to the confirmation page regardless of database status.
     setView('confirmation');
     clearCart();
   };
