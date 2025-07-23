@@ -6,13 +6,16 @@ import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/fire
 // If these keys are not replaced, the app will run in a demo mode
 // without saving orders to the database.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCL1wojiPJ1vRhgydRLl6KvSil05vMjnZw",
+  authDomain: "hydro-fresh-store.firebaseapp.com",
+  projectId: "hydro-fresh-store",
+  storageBucket: "hydro-fresh-store.firebasestorage.app",
+  messagingSenderId: "1090699587135",
+  appId: "1:1090699587135:web:653e70dd244c5cc9c1928a"
 };
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
 
 // --- ICONS (using inline SVGs for self-containment) ---
 const LeafIcon = () => (
