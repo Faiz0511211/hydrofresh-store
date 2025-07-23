@@ -2,20 +2,15 @@ import React, { useState, useMemo, createContext, useContext, useEffect } from '
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-// --- IMPORTANT: PASTE YOUR FIREBASE CONFIGURATION HERE ---
-// If these keys are not replaced, the app will run in a demo mode
-// without saving orders to the database.
+// Your personal Firebase configuration is now correctly placed.
 const firebaseConfig = {
   apiKey: "AIzaSyCL1wojiPJ1vRhgydRLl6KvSil05vMjnZw",
   authDomain: "hydro-fresh-store.firebaseapp.com",
   projectId: "hydro-fresh-store",
-  storageBucket: "hydro-fresh-store.firebasestorage.app",
+  storageBucket: "hydro-fresh-store.appspot.com",
   messagingSenderId: "1090699587135",
   appId: "1:1090699587135:web:653e70dd244c5cc9c1928a"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 
 // --- ICONS (using inline SVGs for self-containment) ---
 const LeafIcon = () => (
